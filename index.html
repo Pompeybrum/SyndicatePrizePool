@@ -68,7 +68,7 @@
 <div class="container">
   <header>
     <h1>Racket League — Prize Calculator</h1>
-    <p>Top 5% cash · Next 20% contraband · Rankings are across the whole tier, not per league · Prizes always decrease with rank</p>
+    <p>Kingpin: top 25% cash, 50% contraband · All other tiers: top 10% cash, 30% contraband · Rankings across whole tier · Prizes always decrease with rank</p>
   </header>
 
   <div class="section-label">Global settings</div>
@@ -96,8 +96,8 @@
   </div>
 
   <div class="legend">
-    <span class="legend-item"><span class="badge badge-cash">Cash</span> Top 5% — cash prize, strictly decreasing</span>
-    <span class="legend-item"><span class="badge badge-cb">Contraband</span> Next 20% — in-game currency, always less than last cash prize</span>
+    <span class="legend-item"><span class="badge badge-cash">Cash</span> Top 10% (Kingpin 25%) — cash prize, strictly decreasing</span>
+    <span class="legend-item"><span class="badge badge-cb">Contraband</span> Next 30% (Kingpin 50%) — in-game currency, always less than last cash prize</span>
     <span class="legend-item"><span class="badge badge-stay">Stay</span> No reward</span>
     <span class="legend-item"><span class="badge badge-demote">Demote</span></span>
   </div>
@@ -114,11 +114,11 @@
 
 <script>
 const TIERS = [
-  {name:"Kingpin",  plg:100, prizePct:0.30, cashPct:0.05, cbPct:0.20, color:"#B8860B", bg:"rgba(184,134,11,.1)"},
-  {name:"Metro",    plg:75,  prizePct:0.25, cashPct:0.05, cbPct:0.20, color:"#C0392B", bg:"rgba(139,0,0,.1)"},
-  {name:"District", plg:50,  prizePct:0.20, cashPct:0.05, cbPct:0.20, color:"#C0505A", bg:"rgba(107,16,32,.12)"},
-  {name:"Borough",  plg:35,  prizePct:0.15, cashPct:0.05, cbPct:0.20, color:"#A0506A", bg:"rgba(59,10,20,.15)"},
-  {name:"Street",   plg:20,  prizePct:0.10, cashPct:0.05, cbPct:0.20, color:"#888880", bg:"rgba(255,255,255,.03)"},
+  {name:"Kingpin",  plg:100, prizePct:0.30, cashPct:0.25, cbPct:0.50, color:"#B8860B", bg:"rgba(184,134,11,.1)"},
+  {name:"Metro",    plg:75,  prizePct:0.25, cashPct:0.10, cbPct:0.30, color:"#C0392B", bg:"rgba(139,0,0,.1)"},
+  {name:"District", plg:50,  prizePct:0.20, cashPct:0.10, cbPct:0.30, color:"#C0505A", bg:"rgba(107,16,32,.12)"},
+  {name:"Borough",  plg:35,  prizePct:0.15, cashPct:0.10, cbPct:0.30, color:"#A0506A", bg:"rgba(59,10,20,.15)"},
+  {name:"Street",   plg:20,  prizePct:0.10, cashPct:0.10, cbPct:0.30, color:"#888880", bg:"rgba(255,255,255,.03)"},
 ];
 const DEFAULTS = [100, 660, 1320, 2640, 5280];
 const CB_POOL_PCT = 0.10;
@@ -138,9 +138,9 @@ function expCurve(n, pool, decay){
   return ws.map(w=>w/tw*pool);
 }
 
-function calcTierPrizes(totalPlayers, tierPool, cbValue){
-  const nCash  = Math.max(1, Math.round(totalPlayers * 0.05));
-  const nCB    = Math.max(1, Math.round(totalPlayers * 0.20));
+function calcTierPrizes(totalPlayers, tierPool, cbValue, cashPct, cbPct){
+  const nCash  = Math.max(1, Math.round(totalPlayers * cashPct));
+  const nCB    = Math.max(1, Math.round(totalPlayers * cbPct));
   const cashPool   = tierPool * (1 - CB_POOL_PCT);
   const cbDollar   = tierPool * CB_POOL_PCT;
   const cbUnitsTot = cbDollar / cbValue;
@@ -194,7 +194,7 @@ function updateMetrics(){
   let totalCBUnits = 0;
   TIERS.forEach((t,i)=>{
     if(players[i]===0) return;
-    const {cbUnits} = calcTierPrizes(players[i], pool*t.prizePct, cbValue);
+    const {cbUnits} = calcTierPrizes(players[i], pool*t.prizePct, cbValue, t.cashPct, t.cbPct);
     totalCBUnits += cbUnits.reduce((a,b)=>a+b,0);
   });
   const maxCBUnits = packRevenue * 0.25 / cbValue;
@@ -237,7 +237,7 @@ function generate(){
     if(total===0) return;
     const tierPool = pool * t.prizePct;
     const {nCash, nCB, cashPrizes, cbUnits, cashPool, cbDollar, minCash} =
-      calcTierPrizes(total, tierPool, cbValue);
+      calcTierPrizes(total, tierPool, cbValue, t.cashPct, t.cbPct);
     const nLeagues = i===0 ? 1 : Math.ceil(total/t.plg);
     const demoteLine = Math.round(total*(1-demotePct));
     const cbUnitsTot = cbUnits.reduce((a,b)=>a+b,0);
@@ -258,9 +258,9 @@ function generate(){
       for(let p=0; p<SHOW_CASH; p++){
         const pos=p+1, prize=cashPrizes[p];
         cumul += prize;
-        let label = pos===1?'1st Overall':pos<=3?'Top 3':'Top 5% — Cash';
+        let label = pos===1?'1st Overall':pos<=3?'Top 3':`Top ${Math.round(t.cashPct*100)}% — Cash`;
         if(t.name==='Kingpin'){
-          label = pos===1?'Champion':pos<=3?'Podium':pos<=10?'Top 10':'Top 5%';
+          label = pos===1?'Champion':pos<=3?'Podium':pos<=10?'Top 10':`Top ${Math.round(t.cashPct*100)}%`;
         }
         html += `<tr class="paid-row">
           <td class="mono" style="font-weight:${pos<=3?600:400}">${ordinal(pos)}</td>
