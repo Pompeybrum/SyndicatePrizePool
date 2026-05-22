@@ -3,103 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Racket League — Prize Calculator</title>
+<title>Syndicate League — Prize Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#0E0E0E; --surface:#161616; --surface2:#1E1E1E;
-    --border:rgba(255,255,255,0.08); --text:#F0EEE8; --muted:#888880;
-  }
-  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:2rem 1rem 4rem; }
-  .container { max-width:1020px; margin:0 auto; }
-  header { margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1.5rem; }
-  header h1 { font-family:'DM Mono',monospace; font-size:1.05rem; font-weight:500; letter-spacing:.15em; text-transform:uppercase; color:#B8860B; margin-bottom:.3rem; }
-  header p { font-size:.82rem; color:var(--muted); }
-  .section-label { font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin-bottom:.7rem; }
-  .global-inputs { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.8rem; }
-  .input-block { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:13px 15px; }
-  .input-block label { display:block; font-size:.72rem; color:var(--muted); margin-bottom:5px; }
-  .input-row { display:flex; align-items:center; gap:7px; }
-  .input-row input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:.95rem; font-weight:500; padding:5px 9px; outline:none; transition:border-color .2s; }
-  .input-row input:focus { border-color:rgba(255,255,255,.3); }
-  .input-row span { font-size:.82rem; color:var(--muted); white-space:nowrap; }
-  .tier-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:1.8rem; }
-  .tier-card { border-radius:10px; padding:11px; border:1px solid var(--border); background:var(--surface); }
-  .tier-card-name { font-family:'DM Mono',monospace; font-size:.66rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px; }
-  .tier-card input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:.88rem; font-weight:500; padding:5px 7px; text-align:center; outline:none; }
-  .tier-card-meta { font-size:.62rem; color:var(--muted); margin-top:4px; text-align:center; line-height:1.6; }
-  .metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:1.8rem; }
-  .metric { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 13px; }
-  .metric-label { font-size:.68rem; color:var(--muted); margin-bottom:2px; }
-  .metric-value { font-family:'DM Mono',monospace; font-size:1.1rem; font-weight:500; }
-  .metric-sub { font-size:.62rem; color:var(--muted); margin-top:2px; }
-  .cap-bar-wrap { background:var(--surface2); border-radius:4px; height:4px; margin-top:5px; overflow:hidden; }
-  .cap-bar { height:4px; border-radius:4px; transition:width .4s; }
-  .btn-row { display:flex; gap:8px; margin-bottom:1.5rem; }
-  .generate-btn { flex:1; padding:11px; font-family:'DM Mono',monospace; font-size:.78rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; border-radius:10px; background:transparent; border:1px solid rgba(255,255,255,.2); color:var(--text); transition:background .15s; }
-  .generate-btn:hover { background:var(--surface); border-color:rgba(255,255,255,.35); }
-  .tab-row { display:flex; gap:6px; margin-bottom:1rem; }
-  .tab { padding:6px 14px; border-radius:6px; font-size:.73rem; font-family:'DM Mono',monospace; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--muted); transition:all .15s; }
-  .tab.active { background:var(--surface); color:var(--text); border-color:rgba(255,255,255,.25); }
-  .legend { display:flex; gap:14px; margin-bottom:1rem; flex-wrap:wrap; align-items:center; }
-  .legend-item { display:flex; align-items:center; gap:5px; font-size:.72rem; color:var(--muted); }
-  .table-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:.78rem; }
-  thead th { font-family:'DM Mono',monospace; font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:8px 11px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; background:var(--surface); }
-  td { padding:6px 11px; border-bottom:1px solid var(--border); vertical-align:middle; }
-  tr.tier-header td { font-family:'DM Mono',monospace; font-size:.67rem; letter-spacing:.04em; font-weight:500; padding:10px 11px; }
-  tr.paid-row:hover td, tr.cb-row:hover td { background:var(--surface); }
-  tr.unpaid-row td { color:var(--muted); font-size:.72rem; }
-  tr.ellipsis-row td { text-align:center; color:var(--muted); font-size:.67rem; font-style:italic; padding:5px; background:var(--surface); }
-  .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:.6rem; font-family:'DM Mono',monospace; font-weight:500; letter-spacing:.04em; text-transform:uppercase; }
-  .badge-cash { background:rgba(34,197,94,.12); color:#4ade80; }
-  .badge-cb { background:rgba(251,146,60,.12); color:#fb923c; }
-  .badge-stay { background:rgba(255,255,255,.06); color:var(--muted); }
-  .badge-demote { background:rgba(239,68,68,.12); color:#f87171; }
-  .mono { font-family:'DM Mono',monospace; }
-  .dim { color:var(--muted); }
-  footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border); font-size:.72rem; color:var(--muted); text-align:center; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0E0E0E;--surface:#161616;--surface2:#1E1E1E;--border:rgba(255,255,255,0.08);--text:#F0EEE8;--muted:#888880;--green:#4ade80;--orange:#fb923c;--red:#f87171}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem}
+  .container{max-width:1040px;margin:0 auto}
+  header{margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1.5rem}
+  header h1{font-family:'DM Mono',monospace;font-size:1.05rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:#B8860B;margin-bottom:.3rem}
+  header p{font-size:.82rem;color:var(--muted);line-height:1.6}
+  .lbl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem}
+  .global-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.8rem}
+  .input-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px}
+  .input-block label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:5px}
+  .input-row{display:flex;align-items:center;gap:7px}
+  .input-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;padding:5px 9px;outline:none;transition:border-color .2s}
+  .input-row input:focus{border-color:rgba(255,255,255,.3)}
+  .input-row span{font-size:.82rem;color:var(--muted);white-space:nowrap}
+  .tier-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.8rem}
+  .tier-card{border-radius:10px;padding:11px;border:1px solid var(--border);background:var(--surface)}
+  .tier-card-name{font-family:'DM Mono',monospace;font-size:.66rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+  .tier-card input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.88rem;font-weight:500;padding:5px 7px;text-align:center;outline:none}
+  .tier-card-meta{font-size:.62rem;color:var(--muted);margin-top:4px;text-align:center;line-height:1.6}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.8rem}
+  .metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+  .metric-label{font-size:.68rem;color:var(--muted);margin-bottom:2px}
+  .metric-value{font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:500}
+  .metric-sub{font-size:.62rem;color:var(--muted);margin-top:2px}
+  .cap-bar-wrap{background:var(--surface2);border-radius:4px;height:4px;margin-top:5px;overflow:hidden}
+  .cap-bar{height:4px;border-radius:4px;transition:width .4s}
+  .floor-alert{background:var(--surface);border:1px solid rgba(251,146,60,.3);border-radius:10px;padding:12px 15px;margin-bottom:1.5rem;font-size:.78rem;color:var(--muted);line-height:1.6}
+  .floor-alert strong{color:#fb923c}
+  .btn-row{display:flex;gap:8px;margin-bottom:1.5rem}
+  .generate-btn{flex:1;padding:11px;font-family:'DM Mono',monospace;font-size:.78rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--text);transition:background .15s}
+  .generate-btn:hover{background:var(--surface)}
+  .tab-row{display:flex;gap:6px;margin-bottom:1rem}
+  .tab{padding:6px 14px;border-radius:6px;font-size:.73rem;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s}
+  .tab.active{background:var(--surface);color:var(--text);border-color:rgba(255,255,255,.25)}
+  .legend{display:flex;gap:14px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  thead th{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:8px 11px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface)}
+  td{padding:6px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr.tier-hdr td{font-family:'DM Mono',monospace;font-size:.67rem;letter-spacing:.04em;font-weight:500;padding:10px 11px}
+  tr.paid-row:hover td,tr.cb-row:hover td{background:var(--surface)}
+  tr.unpaid-row td{color:var(--muted);font-size:.72rem}
+  tr.ellipsis-row td{text-align:center;color:var(--muted);font-size:.67rem;font-style:italic;padding:5px;background:var(--surface)}
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.6rem;font-family:'DM Mono',monospace;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+  .badge-cash{background:rgba(74,222,128,.12);color:var(--green)}
+  .badge-cb{background:rgba(251,146,60,.12);color:var(--orange)}
+  .badge-stay{background:rgba(255,255,255,.06);color:var(--muted)}
+  .badge-demote{background:rgba(239,68,68,.12);color:var(--red)}
+  .mono{font-family:'DM Mono',monospace}
+  .dim{color:var(--muted)}
+  .floor-tag{font-size:.6rem;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:3px;margin-left:4px}
+  .floor-met{background:rgba(74,222,128,.12);color:var(--green)}
+  .floor-miss{background:rgba(251,146,60,.12);color:var(--orange)}
+  footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted);text-align:center}
   @media(max-width:640px){.tier-grid{grid-template-columns:repeat(3,1fr)}.global-inputs{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>Racket League — Prize Calculator</h1>
-    <p>Kingpin: top 25% cash, 50% contraband · All other tiers: top 10% cash, 30% contraband · Rankings across whole tier · Prizes always decrease with rank</p>
+    <h1>The Syndicate — Prize Calculator</h1>
+    <p>Weekly prizes · Kingpin: top 25% cash, 50% contraband · All other tiers: top 10% cash, 30% contraband<br>
+    Rankings are across the <strong>whole tier</strong> — not per individual league · Floors scale to available prize pool · Higher tier always pays more for same percentile finish</p>
   </header>
 
-  <div class="section-label">Global settings</div>
+  <div class="lbl">Global settings</div>
   <div class="global-inputs">
     <div class="input-block">
-      <label>Total prize pool</label>
-      <div class="input-row"><span>$</span><input type="number" id="prize-pool" value="70000" min="0" step="1000" oninput="updateMetrics()"></div>
+      <label>Monthly prize pool</label>
+      <div class="input-row"><span>$</span><input type="number" id="annual-pool" value="5833" min="0" step="5000" oninput="updateAll()"></div>
     </div>
     <div class="input-block">
-      <label>Season pack revenue (for CB cap)</label>
-      <div class="input-row"><span>$</span><input type="number" id="pack-revenue" value="91250" min="0" step="1000" oninput="updateMetrics()"></div>
+      <label>Monthly pack revenue (for CB cap)</label>
+      <div class="input-row"><span>$</span><input type="number" id="annual-revenue" value="7604" min="0" step="5000" oninput="updateAll()"></div>
     </div>
     <div class="input-block">
       <label>Contraband value per unit</label>
-      <div class="input-row"><span>$</span><input type="number" id="cb-value" value="0.05" min="0.001" step="0.01" oninput="updateMetrics()"></div>
+      <div class="input-row"><span>$</span><input type="number" id="cb-value" value="0.05" min="0.001" step="0.01" oninput="updateAll()"></div>
     </div>
   </div>
 
-  <div class="section-label">Players per tier</div>
+  <div class="lbl">Players per tier</div>
   <div class="tier-grid" id="tier-inputs"></div>
   <div class="metrics" id="metrics"></div>
+  <div id="floor-alert"></div>
 
   <div class="btn-row">
     <button class="generate-btn" onclick="generate()">↻ &nbsp;Generate prize table</button>
   </div>
 
   <div class="legend">
-    <span class="legend-item"><span class="badge badge-cash">Cash</span> Top 10% (Kingpin 25%) — cash prize, strictly decreasing</span>
-    <span class="legend-item"><span class="badge badge-cb">Contraband</span> Next 30% (Kingpin 50%) — in-game currency, always less than last cash prize</span>
-    <span class="legend-item"><span class="badge badge-stay">Stay</span> No reward</span>
+    <span class="legend-item"><span class="badge badge-cash">Cash</span> Paid cash prize</span>
+    <span class="legend-item"><span class="badge badge-cb">Contraband</span> In-game currency reward</span>
+    <span class="legend-item"><span class="badge badge-stay">Stay</span></span>
     <span class="legend-item"><span class="badge badge-demote">Demote</span></span>
+    <span class="legend-item"><span class="floor-tag floor-met">floor met</span> Target floor achieved</span>
+    <span class="legend-item"><span class="floor-tag floor-miss">floor scaled</span> Pool too small — floor reduced</span>
   </div>
 
   <div class="tab-row">
@@ -109,58 +115,102 @@
   </div>
 
   <div class="table-wrap" id="prize-table"></div>
-  <footer>Racket League · Rankings across entire tier · Prize value strictly decreases with rank — contraband always worth less than the lowest cash prize</footer>
+  <footer>The Syndicate · Rankings across entire tier · Prize value strictly decreases with rank · Floors scale to available prize pool</footer>
 </div>
 
 <script>
 const TIERS = [
-  {name:"Kingpin",  plg:100, prizePct:0.30, cashPct:0.25, cbPct:0.50, color:"#B8860B", bg:"rgba(184,134,11,.1)"},
-  {name:"Metro",    plg:75,  prizePct:0.25, cashPct:0.10, cbPct:0.30, color:"#C0392B", bg:"rgba(139,0,0,.1)"},
-  {name:"District", plg:50,  prizePct:0.20, cashPct:0.10, cbPct:0.30, color:"#C0505A", bg:"rgba(107,16,32,.12)"},
-  {name:"Borough",  plg:35,  prizePct:0.15, cashPct:0.10, cbPct:0.30, color:"#A0506A", bg:"rgba(59,10,20,.15)"},
-  {name:"Street",   plg:20,  prizePct:0.10, cashPct:0.10, cbPct:0.30, color:"#888880", bg:"rgba(255,255,255,.03)"},
+  {name:"Kingpin",  plg:100, prizePct:0.30, cashPct:0.25, cbPct:0.75, color:"#B8860B", bg:"rgba(184,134,11,.1)",  floor:250, firstPct:0.20},
+  {name:"Metro",    plg:75,  prizePct:0.25, cashPct:0.10, cbPct:0.30, color:"#C0392B", bg:"rgba(139,0,0,.1)",    floor:100, firstPct:0.15},
+  {name:"District", plg:50,  prizePct:0.20, cashPct:0.10, cbPct:0.30, color:"#C0505A", bg:"rgba(107,16,32,.12)", floor:50,  firstPct:0.15},
+  {name:"Borough",  plg:35,  prizePct:0.15, cashPct:0.10, cbPct:0.30, color:"#A0506A", bg:"rgba(59,10,20,.15)",  floor:25,  firstPct:0.15},
+  {name:"Street",   plg:20,  prizePct:0.10, cashPct:0.10, cbPct:0.30, color:"#888880", bg:"rgba(255,255,255,.03)",floor:10,  firstPct:0.15},
 ];
 const DEFAULTS = [100, 660, 1320, 2640, 5280];
-const CB_POOL_PCT = 0.10;
+const CB_POOL_PCT = 0.05;
 let currentTab = 'both';
 
 function fmt(n){ return Math.round(n).toLocaleString(); }
 function fmtM(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function ordinal(n){ if(n>=11&&n<=13)return n+'th'; const s=['th','st','nd','rd'],v=n%10; return n+(s[v]||s[0]); }
 
-// Dynamic decay: last position = 1% of first position
-function calcDecay(n){ return n<=1 ? 0.18 : -Math.log(0.01)/(n-1); }
+function calcPrizes(nCash, cashPool, targetFloor, targetFirstPct=0.20){
+  if(nCash===0||cashPool===0) return [];
+  if(nCash===1) return [cashPool];
 
-function expCurve(n, pool, decay){
-  if(n===0||pool===0) return [];
-  const ws = Array.from({length:n},(_,i)=>Math.exp(-decay*i));
-  const tw = ws.reduce((a,b)=>a+b,0);
-  return ws.map(w=>w/tw*pool);
-}
+  const nTop = Math.max(3, Math.round(nCash * 0.30));
+  const nBot = nCash - nTop;
+  const topPool = cashPool * 0.70;
+  const botPool = cashPool * 0.30;
+  const targetFirstVal = targetFirstPct * cashPool;
 
-function calcTierPrizes(totalPlayers, tierPool, cbValue, cashPct, cbPct){
-  const nCash  = Math.max(1, Math.round(totalPlayers * cashPct));
-  const nCB    = Math.max(1, Math.round(totalPlayers * cbPct));
-  const cashPool   = tierPool * (1 - CB_POOL_PCT);
-  const cbDollar   = tierPool * CB_POOL_PCT;
-  const cbUnitsTot = cbDollar / cbValue;
+  // Find decay so 1st place = 20% of total pool
+  let lo = 0.00001, hi = 10.0;
+  for(let iter=0; iter<100; iter++){
+    const mid = (lo+hi)/2;
+    const ws = Array.from({length:nTop}, (_,i) => Math.exp(-mid*i));
+    const tw = ws.reduce((a,b)=>a+b, 0);
+    if(ws[0]/tw * topPool > targetFirstVal) hi = mid;
+    else lo = mid;
+  }
+  const decay = (lo+hi)/2;
+  const wsTop = Array.from({length:nTop}, (_,i) => Math.exp(-decay*i));
+  const twTop = wsTop.reduce((a,b)=>a+b, 0);
+  const topPrizes = wsTop.map(w => w/twTop * topPool);
+  const lastTop = topPrizes[topPrizes.length-1];
 
-  const cashDecay = calcDecay(nCash);
-  const cashPrizes = expCurve(nCash, cashPool, cashDecay);
-  const minCash = cashPrizes.length ? cashPrizes[cashPrizes.length-1] : 0;
+  if(nBot === 0) return topPrizes;
 
-  // CB curve uses its own decay
-  const cbDecay = calcDecay(nCB);
-  let cbUnits = expCurve(nCB, cbUnitsTot, cbDecay);
+  // Bottom section: linear taper from lastTop down to scaled floor
+  const minForFloor = nBot * targetFloor;
+  let actualFloor = targetFloor * Math.min(1.0, minForFloor > 0 ? botPool/minForFloor : 1.0);
+  actualFloor = Math.max(actualFloor, 0.01);
+  const endVal = Math.min(actualFloor, lastTop * 0.95);
+  const startVal = lastTop;
 
-  // Cap first CB so its dollar value <= 80% of minCash (guarantees last cash > first CB)
-  const maxFirstCBUnits = (minCash * 0.80) / cbValue;
-  if(cbUnits.length && cbUnits[0] > maxFirstCBUnits){
-    const scale = maxFirstCBUnits / cbUnits[0];
-    cbUnits = cbUnits.map(u => u * scale);
+  let botPrizes;
+  if(nBot === 1){
+    botPrizes = [botPool];
+  } else {
+    const raw = Array.from({length:nBot}, (_,i) => startVal - (startVal-endVal)*i/(nBot-1));
+    const rawSum = raw.reduce((a,b)=>a+b, 0);
+    botPrizes = raw.map(v => v/rawSum * botPool);
   }
 
-  return { nCash, nCB, cashPrizes, cbUnits, cbUnitsTot, cashPool, cbDollar, minCash };
+  // Combine and enforce strict decrease with $0.01 minimum
+  const all = [...topPrizes, ...botPrizes];
+  for(let i=1; i<all.length; i++){
+    if(all[i] > all[i-1]) all[i] = all[i-1] * 0.999;
+  }
+  // No minimum applied here - display layer handles $0.50 floor
+  return all;
+}
+
+function calcCBPrizes(nCB, cbUnitsTotal, minCashPrize){
+  if(nCB===0||cbUnitsTotal===0) return [];
+  if(nCB===1) return [cbUnitsTotal];
+  const decayShape = Math.log(50) / (nCB-1);
+  let ws = Array.from({length:nCB}, (_,i) => Math.exp(-decayShape*i));
+  let tw = ws.reduce((a,b)=>a+b, 0);
+  let prizes = ws.map(w => w/tw*cbUnitsTotal);
+  // Cap first CB unit value to 80% of last cash prize
+  const cbValue = parseFloat(document.getElementById('cb-value').value)||0.05;
+  const maxFirstCBDollar = minCashPrize * 0.80;
+  const maxFirstCBUnits = maxFirstCBDollar / cbValue;
+  if(prizes[0] > maxFirstCBUnits){
+    const scl = maxFirstCBUnits / prizes[0];
+    prizes = prizes.map(p => p*scl);
+  }
+  return prizes;
+}
+
+function getInputs(){
+  return {
+    annual: parseFloat(document.getElementById('annual-pool').value)||5833,
+    revenue: parseFloat(document.getElementById('annual-revenue').value)||7604,
+    cbValue: parseFloat(document.getElementById('cb-value').value)||0.05,
+    players: TIERS.map((_,i)=>parseInt(document.getElementById('players-'+i).value)||0),
+  };
 }
 
 function buildTierInputs(){
@@ -169,50 +219,61 @@ function buildTierInputs(){
   TIERS.forEach((t,i)=>{
     el.innerHTML += `<div class="tier-card" style="border-color:${t.color}44">
       <div class="tier-card-name" style="color:${t.color}">${t.name}</div>
-      <input type="number" id="players-${i}" value="${DEFAULTS[i]}" min="0" step="10" oninput="updateMetrics()">
-      <div class="tier-card-meta">${Math.round(t.cashPct*100)}% cash · ${Math.round(t.cbPct*100)}% CB<br>${t.plg}/league · ${Math.round(t.prizePct*100)}% of pool</div>
+      <input type="number" id="players-${i}" value="${DEFAULTS[i]}" min="0" step="10" oninput="updateAll()">
+      <div class="tier-card-meta">${Math.round(t.cashPct*100)}% cash · ${Math.round(t.cbPct*100)}% CB<br>${t.plg}/league · ${Math.round(t.prizePct*100)}% of pool<br>floor target: $${t.floor}</div>
     </div>`;
   });
 }
 
-function getInputs(){
-  return {
-    pool: parseFloat(document.getElementById('prize-pool').value)||70000,
-    packRevenue: parseFloat(document.getElementById('pack-revenue').value)||91250,
-    cbValue: parseFloat(document.getElementById('cb-value').value)||0.05,
-    players: TIERS.map((_,i)=>parseInt(document.getElementById('players-'+i).value)||0),
-  };
-}
+function updateAll(){
+  const {annual, players, revenue, cbValue} = getInputs();
+  const weekly = annual / 4;
+  const weeklyRevenue = revenue / 4;
+  const totalP = players.reduce((a,b)=>a+b, 0);
+  const totalLeagues = TIERS.reduce((a,t,i)=>a+(i===0?1:Math.ceil(players[i]/t.plg)), 0);
+  const totalCash = TIERS.reduce((a,t,i)=>a+Math.round(players[i]*t.cashPct), 0);
 
-function updateMetrics(){
-  const {pool, players, packRevenue, cbValue} = getInputs();
-  const totalP = players.reduce((a,b)=>a+b,0);
-  const totalLeagues = TIERS.reduce((a,t,i)=>a+(i===0?1:Math.ceil(players[i]/t.plg)),0);
-  const totalCash = TIERS.reduce((a,t,i)=>a+Math.round(players[i]*t.cashPct),0);
-  const totalCBPlayers = TIERS.reduce((a,t,i)=>a+Math.round(players[i]*t.cbPct),0);
-
+  // CB units
   let totalCBUnits = 0;
+  let floorsNotMet = [];
   TIERS.forEach((t,i)=>{
-    if(players[i]===0) return;
-    const {cbUnits} = calcTierPrizes(players[i], pool*t.prizePct, cbValue, t.cashPct, t.cbPct);
-    totalCBUnits += cbUnits.reduce((a,b)=>a+b,0);
+    if(!players[i]) return;
+    const tierWeekly = weekly * t.prizePct;
+    const cashPool = tierWeekly * (1-CB_POOL_PCT);
+    const cbPool = tierWeekly * CB_POOL_PCT;
+    totalCBUnits += cbPool / cbValue;
+    const nCash = Math.max(1, Math.round(players[i]*t.cashPct));
+    const prizes = calcPrizes(nCash, cashPool, t.floor, t.firstPct);
+    const floorMet = prizes.length && prizes[prizes.length-1] >= t.floor*0.99;
+    if(!floorMet && prizes.length){
+      floorsNotMet.push({name:t.name, target:t.floor, actual:prizes[prizes.length-1]});
+    }
   });
-  const maxCBUnits = packRevenue * 0.25 / cbValue;
+
+  const maxCBUnits = weeklyRevenue * 0.25 / cbValue;
   const capPct = Math.min(100, totalCBUnits/maxCBUnits*100);
   const capColor = capPct>90?'#ef4444':capPct>70?'#f59e0b':'#22c55e';
 
   document.getElementById('metrics').innerHTML = `
     <div class="metric"><div class="metric-label">Total players</div><div class="metric-value">${fmt(totalP)}</div></div>
-    <div class="metric"><div class="metric-label">Prize pool</div><div class="metric-value">$${fmt(pool)}</div></div>
+    <div class="metric"><div class="metric-label">Weekly pool</div><div class="metric-value">$${fmt(weekly)}</div><div class="metric-sub">$${fmt(annual)}/month</div></div>
     <div class="metric"><div class="metric-label">Total leagues</div><div class="metric-value">${fmt(totalLeagues)}</div></div>
-    <div class="metric"><div class="metric-label">Cash places</div><div class="metric-value">${fmt(totalCash)}</div><div class="metric-sub">${fmt(totalCBPlayers)} contraband places</div></div>
+    <div class="metric"><div class="metric-label">Cash places</div><div class="metric-value">${fmt(totalCash)}</div></div>
     <div class="metric">
-      <div class="metric-label">Contraband minted</div>
+      <div class="metric-label">CB minted/week</div>
       <div class="metric-value" style="color:${capColor}">${fmt(Math.round(totalCBUnits))}</div>
-      <div class="metric-sub">${capPct.toFixed(1)}% of ${fmt(Math.round(maxCBUnits))} cap</div>
+      <div class="metric-sub">${capPct.toFixed(1)}% of weekly cap</div>
       <div class="cap-bar-wrap"><div class="cap-bar" style="width:${capPct}%;background:${capColor}"></div></div>
     </div>
   `;
+
+  const alertEl = document.getElementById('floor-alert');
+  if(floorsNotMet.length){
+    const items = floorsNotMet.map(f=>`<strong>${f.name}</strong>: target $${f.target} → actual $${f.actual.toFixed(2)}`).join(' · ');
+    alertEl.innerHTML = `<div class="floor-alert">⚠ Floor targets not met at current prize pool — prizes scale down proportionally. ${items}. Increase monthly pool to meet targets.</div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
 }
 
 function switchTab(btn, tab){
@@ -223,96 +284,91 @@ function switchTab(btn, tab){
 }
 
 function generate(){
-  const {pool, players, cbValue} = getInputs();
-  const demotePct = 0.25;
+  const {annual, players, cbValue} = getInputs();
+  const weekly = annual / 4;
 
   let html = `<table><thead><tr>
     <th>Overall rank</th><th>Tier</th><th>Type</th>
     <th>Prize / Contraband</th><th>Cash equiv.</th>
-    <th>% of band</th><th>Cumul. cash</th>
+    <th>% of band</th><th>Floor status</th>
   </tr></thead><tbody>`;
 
   TIERS.forEach((t,i)=>{
     const total = players[i];
     if(total===0) return;
-    const tierPool = pool * t.prizePct;
-    const {nCash, nCB, cashPrizes, cbUnits, cashPool, cbDollar, minCash} =
-      calcTierPrizes(total, tierPool, cbValue, t.cashPct, t.cbPct);
-    const nLeagues = i===0 ? 1 : Math.ceil(total/t.plg);
-    const demoteLine = Math.round(total*(1-demotePct));
-    const cbUnitsTot = cbUnits.reduce((a,b)=>a+b,0);
+    const tierWeekly = weekly * t.prizePct;
+    const cashPool = tierWeekly * (1-CB_POOL_PCT);
+    const cbPool = tierWeekly * CB_POOL_PCT;
+    const cbUnitsTotal = cbPool / cbValue;
+    const nCash = Math.max(1, Math.round(total*t.cashPct));
+    const nCB   = Math.max(1, Math.round(total*t.cbPct));
+    const nLeagues = i===0?1:Math.ceil(total/t.plg);
+    const demoteLine = Math.round(total*0.75);
 
-    html += `<tr class="tier-header"><td colspan="7" style="background:${t.bg};color:${t.color};border-left:3px solid ${t.color}">
-      ${t.name.toUpperCase()} &nbsp;·&nbsp; ${fmt(total)} players &nbsp;·&nbsp; ${nLeagues} league${nLeagues>1?'s':''}
-      &nbsp;·&nbsp; <span style="color:#4ade80">${fmt(nCash)} cash (${fmtM(cashPool)} pool)</span>
-      &nbsp;·&nbsp; <span style="color:#fb923c">${fmt(nCB)} contraband (${fmt(Math.round(cbUnitsTot))} units)</span>
+    const cashPrizes = calcPrizes(nCash, cashPool, t.floor, t.firstPct);
+    const minCash = cashPrizes.length ? cashPrizes[cashPrizes.length-1] : 0;
+    const cbPrizes = calcCBPrizes(nCB, cbUnitsTotal, minCash);
+    const cbUnitsTot = cbPrizes.reduce((a,b)=>a+b,0);
+    const floorMet = cashPrizes.length && cashPrizes[cashPrizes.length-1] >= t.floor*0.99;
+
+    html += `<tr class="tier-hdr"><td colspan="7" style="background:${t.bg};color:${t.color};border-left:3px solid ${t.color}">
+      ${t.name.toUpperCase()} · ${fmt(total)} players · ${nLeagues} league${nLeagues>1?'s':''}
+      · <span style="color:var(--green)">${fmt(nCash)} cash ($${fmt(Math.round(cashPool))})</span>
+      · <span style="color:var(--orange)">${fmt(nCB)} CB (${fmt(Math.round(cbUnitsTot))} units)</span>
+      · weekly pool $${fmt(Math.round(tierWeekly))}
     </td></tr>`;
 
     const SHOW_CASH = Math.min(nCash, 30);
     const SHOW_CB   = Math.min(nCB, 20);
-    const SHOW_NONE = 3;
-    let cumul = 0;
 
-    // ── Cash rows ──────────────────────────────────────────────────────────
     if(currentTab !== 'cb'){
       for(let p=0; p<SHOW_CASH; p++){
         const pos=p+1, prize=cashPrizes[p];
-        cumul += prize;
-        let label = pos===1?'1st Overall':pos<=3?'Top 3':`Top ${Math.round(t.cashPct*100)}% — Cash`;
-        if(t.name==='Kingpin'){
-          label = pos===1?'Champion':pos<=3?'Podium':pos<=10?'Top 10':`Top ${Math.round(t.cashPct*100)}%`;
-        }
+        const isLast = p===nCash-1;
+        const fTag = isLast ? (floorMet?`<span class="floor-tag floor-met">floor met $${t.floor}</span>`:`<span class="floor-tag floor-miss">scaled</span>`) : '';
+        let label = t.name==='Kingpin'?(pos===1?'Champion':pos<=3?'Podium':pos<=10?'Top 10':'Top 25%'):(pos===1?'1st Overall':pos<=3?'Top 3':`Top ${Math.round(t.cashPct*100)}%`);
+        // Show minimum $0.50 for display but always as cash
+        const displayPrize = Math.max(0.50, prize);
         html += `<tr class="paid-row">
           <td class="mono" style="font-weight:${pos<=3?600:400}">${ordinal(pos)}</td>
           <td style="color:${t.color};font-size:.7rem" class="mono">${t.name}</td>
           <td><span class="badge badge-cash">Cash</span></td>
-          <td class="mono" style="font-weight:${pos===1?600:400}">${fmtM(prize)}</td>
+          <td class="mono" style="font-weight:${pos===1?600:400}">${fmtM(displayPrize)}${fTag}</td>
           <td class="dim">—</td>
           <td class="dim">${(prize/cashPool*100).toFixed(3)}%</td>
-          <td class="dim">${fmtM(cumul)}</td>
+          <td class="dim">${label}</td>
         </tr>`;
       }
-      if(nCash>30){
-        html += `<tr class="ellipsis-row"><td colspan="7">··· ${fmt(nCash-30)} more cash places · ${ordinal(31)} through ${ordinal(nCash)} · min prize ${fmtM(cashPrizes[nCash-1])} ···</td></tr>`;
-      }
+      if(nCash>30) html+=`<tr class="ellipsis-row"><td colspan="7">··· ${fmt(nCash-30)} more cash places · ${ordinal(31)} through ${ordinal(nCash)} · last prize ${fmtM(Math.max(0.50, cashPrizes[nCash-1]))} ···</td></tr>`;
     }
 
-    // ── Contraband rows ────────────────────────────────────────────────────
     if(currentTab !== 'cash'){
       for(let p=0; p<SHOW_CB; p++){
-        const pos=nCash+p+1, units=cbUnits[p], cashEq=units*cbValue;
+        const pos=nCash+p+1, units=cbPrizes[p], cashEq=units*cbValue;
         html += `<tr class="cb-row">
           <td class="mono dim">${ordinal(pos)}</td>
           <td style="color:${t.color};font-size:.7rem" class="mono">${t.name}</td>
           <td><span class="badge badge-cb">Contraband</span></td>
-          <td class="mono" style="color:#fb923c">${fmt(Math.round(units))} CB</td>
+          <td class="mono" style="color:var(--orange)">${fmt(Math.round(units))} CB</td>
           <td class="dim">${fmtM(cashEq)}</td>
-          <td class="dim">${(units/cbUnitsTot*100).toFixed(3)}%</td>
-          <td class="dim">—</td>
+          <td class="dim">${cbUnitsTot>0?(units/cbUnitsTot*100).toFixed(3)+'%':'—'}</td>
+          <td class="dim">Next ${Math.round(t.cbPct*100)}%</td>
         </tr>`;
       }
-      if(nCB>20){
-        html += `<tr class="ellipsis-row"><td colspan="7">··· ${fmt(nCB-20)} more contraband places · ${ordinal(nCash+21)} through ${ordinal(nCash+nCB)} · min ${fmt(Math.round(cbUnits[nCB-1]))} CB (${fmtM(cbUnits[nCB-1]*cbValue)}) ···</td></tr>`;
-      }
+      if(nCB>20) html+=`<tr class="ellipsis-row"><td colspan="7">··· ${fmt(nCB-20)} more CB places · ${ordinal(nCash+21)} through ${ordinal(nCash+nCB)} · last ${fmt(Math.round(cbPrizes[nCB-1]))} CB (${fmtM(cbPrizes[nCB-1]*cbValue)}) ···</td></tr>`;
     }
 
-    // ── No reward sample ───────────────────────────────────────────────────
-    if(currentTab === 'both'){
-      for(let j=0; j<SHOW_NONE; j++){
-        const pos=nCash+nCB+j+1;
-        if(pos>total) break;
-        const isDemote=pos>demoteLine;
-        html += `<tr class="unpaid-row">
-          <td class="mono">${ordinal(pos)}</td>
-          <td style="color:${t.color};font-size:.7rem" class="mono">${t.name}</td>
+    if(currentTab==='both'){
+      const nNone = total-nCash-nCB;
+      for(let j=0;j<Math.min(3,nNone);j++){
+        const pos=nCash+nCB+j+1, isDemote=pos>demoteLine;
+        html+=`<tr class="unpaid-row">
+          <td class="mono">${ordinal(pos)}</td><td style="color:${t.color};font-size:.7rem" class="mono">${t.name}</td>
           <td><span class="badge ${isDemote?'badge-demote':'badge-stay'}">${isDemote?'Demote':'Stay'}</span></td>
           <td>–</td><td>–</td><td>–</td><td>–</td>
         </tr>`;
       }
-      const remaining = total-nCash-nCB;
-      if(remaining>SHOW_NONE){
-        html += `<tr class="ellipsis-row"><td colspan="7">··· positions ${ordinal(nCash+nCB+SHOW_NONE+1)} through ${ordinal(total)} — no reward ···</td></tr>`;
-      }
+      if(nNone>3) html+=`<tr class="ellipsis-row"><td colspan="7">··· positions ${ordinal(nCash+nCB+4)} through ${ordinal(total)} — no reward ···</td></tr>`;
     }
   });
 
@@ -321,7 +377,7 @@ function generate(){
 }
 
 buildTierInputs();
-updateMetrics();
+updateAll();
 generate();
 </script>
 </body>
